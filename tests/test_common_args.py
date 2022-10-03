@@ -6,7 +6,7 @@ Tests for common arg parsing
 import pytest
 
 # Local
-from model_image_builder.common_args import bool_from_env, number_from_env
+from watson_embed_model_packager.common_args import bool_from_env, number_from_env
 from tests.helpers import env
 
 
