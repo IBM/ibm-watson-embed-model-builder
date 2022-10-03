@@ -1,0 +1,18 @@
+# This workflow runs on any published release
+name: release
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set component version
+        run: echo "COMPONENT_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Release script
+        run: |
+          make build release
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}

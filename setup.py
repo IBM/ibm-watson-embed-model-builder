@@ -33,7 +33,7 @@ setuptools.setup(
     name=package_name,
     author="IBM",
     version=COMPONENT_VERSION,
-    license="Copyright IBM 2022 -- All rights reserved.",
+    license="Apache 2.0",
     description="Tools for building images with Watson Core models",
     install_requires=requirements,
     packages=setuptools.find_packages(include=(f"{package_name}*",)),
