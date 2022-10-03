@@ -1,0 +1,19 @@
+# Byte compiled python from running locally
+*.pyc
+
+# Coverage report outputs
+.coverage
+.coverage*
+reports
+htmlcov
+
+# Wheel build artifacts
+build
+dist
+*.egg-info
+
+# IDE configs
+.idea
+
+# virtual environments
+venv

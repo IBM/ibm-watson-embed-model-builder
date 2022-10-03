@@ -1,0 +1,28 @@
+block_class: watson_doc_understanding.blocks.document_conversion.sdu_doc_conversion.SDUDocConversion
+block_id: 451e68f6-874d-4336-9c82-69551b429893
+created: "2022-05-16 11:15:13.855829"
+description: Document conversion using Smart Document Understanding
+name: Document conversion using Smart Document Understanding
+settings:
+  correct_text_flow: true
+  exclude_headers_footers: true
+  filters:
+    filter_white_text: true
+    header_footer_auto_enabled: false
+  identify_font_style: true
+  identify_footnotes: true
+  identify_lists: true
+  identify_sections: true
+  image_processing:
+    process_images: false
+  include_bbox: true
+  processing_mode: oob
+  sort_by_position: true
+  table:
+    enabled: true
+    table_identifiers:
+      border: mltable
+      structure: mltable
+  text_extraction_mode: false
+version: 0.0.1
+watson_doc_understanding_version: 0.2.2a2
