@@ -23,3 +23,6 @@ clean: ## clean up build artifacts and test reports
 
 fmt:
 	black . && isort .
+
+fmt-check:
+	black --check . && isort --check .
