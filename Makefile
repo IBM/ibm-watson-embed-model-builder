@@ -26,3 +26,7 @@ fmt:
 
 fmt-check:
 	black --check . && isort --check .
+
+release:
+	pip3 install twine
+	twine upload --username "__token__" --password "${PYPI_TOKEN}" --repository testpypi dist/*
