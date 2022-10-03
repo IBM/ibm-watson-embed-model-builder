@@ -12,9 +12,11 @@ import tempfile
 # Third Party
 import pytest
 
-# Local
+# First Party
 from watson_embed_model_packager import build_model_images as command
 from watson_embed_model_packager.constants import CONFIG_CSV_COL_HEADERS
+
+# Local
 from tests.helpers import (
     TEST_CONFIG,
     TEST_LABELS,

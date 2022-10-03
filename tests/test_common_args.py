@@ -5,8 +5,10 @@ Tests for common arg parsing
 # Third Party
 import pytest
 
-# Local
+# First Party
 from watson_embed_model_packager.common_args import bool_from_env, number_from_env
+
+# Local
 from tests.helpers import env
 
 
