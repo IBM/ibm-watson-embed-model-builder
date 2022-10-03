@@ -28,13 +28,13 @@ with open(os.path.join(base_dir, "requirements.txt")) as handle:
     requirements = handle.read().splitlines()
 
 
-package_name = "model_image_builder"
+package_name = "watson_embed_model_packager"
 setuptools.setup(
     name=package_name,
     author="IBM",
     version=COMPONENT_VERSION,
-    license="Copyright IBM 2022 -- All rights reserved.",
-    description="Tools for building images with Watson Core models",
+    license="Apache 2.0",
+    description="Tools for building images with Watson Embedded models",
     install_requires=requirements,
     packages=setuptools.find_packages(include=(f"{package_name}*",)),
     package_data={

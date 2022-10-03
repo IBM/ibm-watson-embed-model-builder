@@ -26,11 +26,11 @@ import pytest
 import yaml
 
 # First Party
+from watson_embed_model_packager import constants
+from watson_embed_model_packager import setup_build_config as command
 import alog
 
 # Local
-from model_image_builder import constants
-from model_image_builder import setup_build_config as command
 from tests.helpers import cli_args, env
 
 ## Constants ###################################################################

@@ -5,9 +5,11 @@ Tests for the main module entrypoint
 # Third Party
 import pytest
 
+# First Party
+from watson_embed_model_packager import build_model_images
+from watson_embed_model_packager.__main__ import main
+
 # Local
-from model_image_builder import build_model_images
-from model_image_builder.__main__ import main
 from tests.helpers import TEST_CONFIG, cli_args, subproc_mock_fixture_base
 
 

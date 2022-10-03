@@ -2,7 +2,7 @@ test: ## run pytest in parallel with coverage reporting. Fail under 100% code co
 	pytest -W error \
 		--cov-report term \
 		--cov-report html:htmlcov \
-		--cov=model_image_builder \
+		--cov=watson_embed_model_packager \
 		--cov-fail-under=100.0 \
 		--html="reports/report.html" \
 		--self-contained-html \
@@ -26,3 +26,7 @@ fmt:
 
 fmt-check:
 	black --check . && isort --check .
+
+release:
+	pip3 install twine
+	twine upload --username "__token__" --password "${PYPI_TOKEN}" dist/*
