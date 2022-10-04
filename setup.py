@@ -37,8 +37,6 @@ setuptools.setup(
     description="Tools for building images with Watson Embedded models",
     install_requires=requirements,
     packages=setuptools.find_packages(include=(f"{package_name}*",)),
-    package_data={
-        package_name: glob.glob(f"{package_name}/resources/**", recursive=True)
-    },
+    data_files=glob.glob(f"{package_name}/resources/**"),
     include_package_data=True,
 )
