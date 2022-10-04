@@ -13,6 +13,12 @@ model images alog with useful metadata.
 
 These operations are split into separate commands to facilitate easy parallelization in the CI system of your choice.
 
+## Installation
+
+```shell
+pip install watson_embed_model_packager
+```
+
 ## Usage
 
 To build a model manifest file from models hosted in an artifactory instance, you will need:
