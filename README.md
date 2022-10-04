@@ -23,8 +23,8 @@ pip install watson_embed_model_packager
 
 To build a model manifest file from models hosted in an artifactory instance, you will need:
 
-- A list of all module GUIDs to support
-- A watson library and version
+- a list of all module GUIDs to support
+- a watson library and version
 - an artifactory repo to search
 - a target docker image repository for these model images to land
 - artifactory credentials
