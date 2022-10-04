@@ -486,6 +486,75 @@ def test_metadata_are_included_in_csv_for_new_format():
         )
 
 
+def test_image_tag_is_included_in_csv_if_passed_in():
+    """Make sure that model image tag is included in csv file, coming from the passed in flag"""
+    with cli_test_harness(
+        REPO_DATA,
+        "-m",
+        MODULE_GUID,
+        "-it",
+        "0.0.5",
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 1
+        print(model_entries[0])
+        assert "0.0.5" in model_entries[0][constants.TARGET_IMAGE_NAME]
+
+
+def test_image_tag_is_included_in_csv_coming_from_library_version():
+    """Make sure that model image tag is included in csv file, when there's no --image-tag flag set"""
+    model_name = make_model_name(
+        module_type="ensemble", model_label="classification-workflow"
+    )
+    with cli_test_harness(
+        {
+            f"/blocks/sample/{model_name}": make_model_content(
+                {
+                    "block_class": "lego.blocks.sample.testing.Tester",
+                    "block_id": MODULE_GUID,
+                    "lego_version": "1.2.3",
+                }
+            )
+        },
+        "-m",
+        MODULE_GUID,
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 1
+        print(model_entries[0])
+        assert "1.2.3" in model_entries[0][constants.TARGET_IMAGE_NAME]
+
+
+def test_image_tag_is_included_in_csv_coming_from_flag_not_library_version():
+    """Make sure that model image tag is included in csv file, and the image-tag flag takes precedence"""
+    model_name = make_model_name(
+        module_type="ensemble", model_label="classification-workflow"
+    )
+    with cli_test_harness(
+        {
+            f"/blocks/sample/{model_name}": make_model_content(
+                {
+                    "block_class": "lego.blocks.sample.testing.Tester",
+                    "block_id": MODULE_GUID,
+                    "lego_version": "1.2.3",
+                }
+            )
+        },
+        "-m",
+        MODULE_GUID,
+        "-it",
+        "0.0.10",
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 1
+        print(model_entries[0])
+        assert "1.2.3" not in model_entries[0][constants.TARGET_IMAGE_NAME]
+        assert "0.0.10" in model_entries[0][constants.TARGET_IMAGE_NAME]
+
+
 def test_sentiment_names_are_fixed():
     """Make sure that models with invalid task type names are fixed, specifically for sentiment-aggregated"""
     model_name = make_model_name(

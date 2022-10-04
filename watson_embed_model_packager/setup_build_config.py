@@ -440,11 +440,13 @@ async def get_models_from_repo(
     return results
 
 
-def get_target_image_name(model_info: ModelInfo, target_registry: Optional[str]) -> str:
+def get_target_image_name(
+    model_info: ModelInfo, target_registry: Optional[str], image_tag: Optional[str]
+) -> str:
     """Get the image name that should be used to tag the built image"""
     lib_prefix = model_info.parent_library.replace("_", "-")
     image_name = f"{lib_prefix}_{model_info.name}"
-    image_version = str(model_info.parent_library_version)
+    image_version = image_tag if image_tag else str(model_info.parent_library_version)
     full_name = f"{image_name}:{image_version}"
     if target_registry:
         full_name = "{}/{}".format(target_registry.rstrip("/"), full_name)
@@ -558,6 +560,7 @@ async def async_main(args: argparse.Namespace):
     log.info("Library Versions: %s", library_versions)
     log.info("Artifactory Repos: %s", args.artifactory_repo)
     log.info("Module GUIDs: %s", args.module_guid)
+    log.info("Image tag version: %s", args.image_tag)
 
     # Gather the model infos from each repo
     model_lookup_futures = {
@@ -593,7 +596,7 @@ async def async_main(args: argparse.Namespace):
         csv_cols[MODEL_NAME].append(model_info.name)
         csv_cols[MODEL_SOURCE].append(model_info.url)
         csv_cols[TARGET_IMAGE_NAME].append(
-            get_target_image_name(model_info, args.target_registry)
+            get_target_image_name(model_info, args.target_registry, args.image_tag)
         )
         csv_cols[IMAGE_LABELS].append(get_image_labels(model_info))
 
@@ -651,6 +654,12 @@ def main(parent_parser: Optional[argparse.ArgumentParser] = None):
         nargs="+",
         default=str_list_from_env("LIBRARY_VERSIONS"),
         help="lib:version pair(s) for watson libraries being released",
+    )
+    parser.add_argument(
+        "--image-tag",
+        "-it",
+        default=os.environ.get("IMAGE_TAG", ""),
+        help="What to tag the version of the model images",
     )
     parser.add_argument(
         "--path-expr",
