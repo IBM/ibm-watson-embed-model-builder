@@ -9,7 +9,7 @@ Given a set of `watson_embed` models to be packaged, this tool can create a mode
 images and metadata to be created.
 
 Given a model manifest file, this tool can fetch the model artifacts and package them into watson runtime compatible 
-model images alog with useful metadata.
+model images along with useful metadata.
 
 These operations are split into separate commands to facilitate easy parallelization in the CI system of your choice.
 
