@@ -7,11 +7,11 @@ from contextlib import closing, contextmanager
 from datetime import datetime
 from fnmatch import fnmatch
 from http import HTTPStatus
-import os
 from typing import Dict, List, Optional, TextIO
 import copy
 import csv
 import io
+import os
 import random
 import socket
 import tempfile
@@ -261,9 +261,7 @@ def cli_test_harness(
 ):
     """Helper to avoid nested with statements in tests"""
     cliargs = list(cliargs)
-    if include_lib_version and not (
-        "-v" in cliargs or "--library-version" in cliargs
-    ):
+    if include_lib_version and not ("-v" in cliargs or "--library-version" in cliargs):
         cliargs.append("-v")
         cliargs.extend(SUPPORTED_LIBS)
 
@@ -277,11 +275,17 @@ def cli_test_harness(
                 current_model_dir = os.path.join(model_dir, model_name)
                 os.mkdir(current_model_dir)
                 print("current_model_dir is: ", current_model_dir)
-                for file_name, file_data in model_files.items(): # file_name is "/config.yml"
-                    print("writing file name: ", os.path.join(current_model_dir, file_name[1:]))
+                for (
+                    file_name,
+                    file_data,
+                ) in model_files.items():  # file_name is "/config.yml"
+                    print(
+                        "writing file name: ",
+                        os.path.join(current_model_dir, file_name[1:]),
+                    )
                     with open(os.path.join(current_model_dir, file_name[1:]), "w") as f:
                         f.write(file_data)
-                        
+
             if include_output_csv:
                 with tempfile.NamedTemporaryFile(suffix=".csv") as output_csv:
                     if not ("-o" in cliargs or "--output-csv" in cliargs):
@@ -356,6 +360,7 @@ def test_single_model():
         model_entries = parse_csv_file(output_csv)
         assert len(model_entries) == 1
 
+
 def test_local_model():
     """Test that the simple case of running the command with a single model locally
     yields the desired result
@@ -364,7 +369,7 @@ def test_local_model():
         LOCAL_DATA,
         "-it",
         "1.3.2",
-        local_model=True
+        local_model=True,
     ) as output_csv:
         command.main()
         model_entries = parse_csv_file(output_csv)
