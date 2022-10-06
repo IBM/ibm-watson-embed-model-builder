@@ -15,6 +15,7 @@ import csv
 import os
 import re
 import sys
+import zipfile
 
 # Third Party
 import httpx
@@ -439,6 +440,103 @@ async def get_models_from_repo(
     log.debug3("Models from [%s]: %s", artifactory_repo, results)
     return results
 
+def get_model_info_from_config_yml(model_name: str, config_path: str) -> Optional[ModelInfo]:
+     # Parse the yaml
+    config = {}
+    with open(config_path) as f:
+        config_text = f.read()
+        print(config_text)
+        config = yaml.safe_load(config_text)
+
+    # Get the guid for this model's module
+    id_fields = [key for key in config.keys() if key.endswith("_id")]
+    if len(id_fields) != 1:
+        log.warning("No single module guid found for model with config [%s]", config_path)
+        return None
+    id_field = id_fields[0]
+    module_guid = config[id_field]
+
+    # Determine the parent library name
+    module_flavor = id_field[: id_field.index("_id")]
+    class_field = f"{module_flavor}_class"
+    if class_field not in config:
+        log.warning("No %s found in config path [%s]", class_field, config_path)
+        return None
+    raw_parent_library = config[class_field].split(".")[0]
+    parent_library = LIBRARY_PACKAGE_ALIASES.get(raw_parent_library, raw_parent_library)
+    fixed_module_class = config[class_field].replace(raw_parent_library, parent_library)
+
+    # Determine the parent library version
+    parent_lib_version_key = f"{raw_parent_library}_version"
+    parent_lib_version = config.get(parent_lib_version_key)
+    if parent_lib_version is None:
+        log.debug("No %s found in config path [%s]", parent_lib_version_key, config_path)
+
+        # Look in the model name if not found in the config.yml
+        version_match = VERSION_EXPR.search(config_path)
+        assert (
+            version_match
+        ), f"Programming Error: model names with missing versions should be eliminated earlier. Model: {config_path}"
+        parent_lib_version = "{}.{}.{}".format(
+            version_match.group("major"),
+            version_match.group("minor"),
+            version_match.group("patch"),
+        )
+        log.debug("Using library version [%s] found in model name", parent_lib_version)
+    try:
+        parent_lib_version = semver.VersionInfo.parse(parent_lib_version)
+    except ValueError:
+        log.warning(
+            "Could not parse a valid version for model %s from parent library version: %s",
+            config_path,
+            parent_lib_version,
+        )
+        return None
+
+    # Parse the date this thing was created:
+    if "created" in config:
+        created = config.get("created")
+    else:
+        created = datetime.now().isoformat().replace("T", " ")
+
+    # Construct the ModelInfo and return
+    return ModelInfo(
+        name=model_name,
+        guid=module_guid,
+        parent_library=parent_library,
+        parent_library_version=parent_lib_version,
+        module_class=fixed_module_class,
+        created=created,
+        url=config_path.replace("/config.yaml", "")
+    )
+
+def get_models_from_local_dir(model_dir_path: str) -> List[ModelInfo]:
+    """Get all models from the given local directory that should be built into images"""
+
+    # Get a list of all models from the local dir
+    local_models = []
+
+    # unzip first if they give us zip files
+    print("in get_models_from_local_dir, the model_dir_path is: ", model_dir_path)
+    if all(os.path.isfile(file) and file.endswith(".zip") for file in os.listdir(model_dir_path)):
+        for path_to_zip_file in os.listdir(model_dir_path):
+            dest = path_to_zip_file.split("/")[-1].replace(".zip","")
+            with zipfile.ZipFile(path_to_zip_file, 'r') as zip_ref:
+                zip_ref.extractall(dest)
+                zip_ref.close()
+
+    for child_dir in os.listdir(model_dir_path):
+        full_model_dir = os.path.join(model_dir_path, child_dir)
+        print("full_model_dir is: ", full_model_dir)
+        if os.path.isdir(full_model_dir) and "config.yml" in os.listdir(full_model_dir):
+            print("found config.yml")
+            model = get_model_info_from_config_yml(child_dir, os.path.join(full_model_dir, "config.yml"))
+            local_models.append(model)
+
+    log.debug3("Models for local dir [%s]: %s", model_dir_path, local_models)
+
+    return local_models
+
 
 def get_target_image_name(
     model_info: ModelInfo, target_registry: Optional[str], image_tag: Optional[str]
@@ -556,34 +654,55 @@ async def async_main(args: argparse.Namespace):
         log.error("Invalid --library-version: %s", args.library_version)
         sys.exit(1)
 
+    # Parse the local model dir, make sure it's not path to a model itself
+    if args.local_model_dir:
+        if not os.path.isdir(args.local_model_dir):
+            log.error("Invalid --local-model-dir: %s. The path is not a directory.", args.local_model_dir)
+            sys.exit(1)
+        if os.path.exists(os.path.join(args.local_model_dir, "config.yml")):
+            log.error("Invalid --local-model-dir: %s. The path should not be a model itself.", args.local_model_dir)
+            sys.exit(1)
+
     log.info("Running SETUP")
     log.info("Library Versions: %s", library_versions)
-    log.info("Artifactory Repos: %s", args.artifactory_repo)
+    if args.artifactory_repo:
+        log.info("Artifactory Repos: %s", args.artifactory_repo)
+    if args.local_model_dir:
+        log.info("Local Model Dir: %s", args.local_model_dir)
     log.info("Module GUIDs: %s", args.module_guid)
-    log.info("Image tag version: %s", args.image_tag)
+    if args.image_tag:
+        log.info("Image tag version: %s", args.image_tag)
 
-    # Gather the model infos from each repo
-    model_lookup_futures = {
-        repo.rstrip("/"): get_models_from_repo(
-            artifactory_repo=repo.rstrip("/"),
-            artifactory_username=args.artifactory_username,
-            artifactory_api_key=args.artifactory_api_key,
-            module_guids=args.module_guid,
-            library_versions=library_versions,
-            path_exprs=args.path_expr,
+    all_model_infos = []
+
+
+    # Gather the model infos from local model dir (if given)
+    if args.local_model_dir:
+        all_model_infos.extend(get_models_from_local_dir(args.local_model_dir))
+        log.debug("Found a total of %d model infos from local dir", len(all_model_infos))
+    # Gather the model infos from each repo (if given)
+    if args.artifactory_repo:
+        model_lookup_futures = {
+            repo.rstrip("/"): get_models_from_repo(
+                artifactory_repo=repo.rstrip("/"),
+                artifactory_username=args.artifactory_username,
+                artifactory_api_key=args.artifactory_api_key,
+                module_guids=args.module_guid,
+                library_versions=library_versions,
+                path_exprs=args.path_expr,
+            )
+            for repo in args.artifactory_repo
+        }
+        model_lookup_results = {
+            repo: await lookup_future
+            for repo, lookup_future in model_lookup_futures.items()
+        }
+        all_model_infos.extend(
+            model_info
+            for model_infos in model_lookup_results.values()
+            for model_info in model_infos
         )
-        for repo in args.artifactory_repo
-    }
-    model_lookup_results = {
-        repo: await lookup_future
-        for repo, lookup_future in model_lookup_futures.items()
-    }
-    all_model_infos = [
-        model_info
-        for model_infos in model_lookup_results.values()
-        for model_info in model_infos
-    ]
-    log.debug("Found a total of %d model infos", len(all_model_infos))
+        log.debug("Found a total of %d model infos from artifactory", len(model_lookup_results))
 
     # Construct the CSV file from all of the found models
     csv_cols = {
@@ -638,9 +757,16 @@ def main(parent_parser: Optional[argparse.ArgumentParser] = None):
     parser.add_argument(
         "--artifactory-repo",
         "-r",
-        default=str_list_from_env("ARTIFACTORY_REPO"),
         nargs="+",
-        help="API key for artifactory access",
+        default=str_list_from_env("ARTIFACTORY_REPO"),
+        help="Artifactory repo to get models from. At least one of --artifactory-repo or --local-model-dir has to be set.",
+    )
+    parser.add_argument(
+        "--local-model-dir",
+        "-md",
+        default=str_list_from_env("LOCAL_MODEL_DIR"),
+        help="Local directory that has the models to package from. At least one of --artifactory-repo or --local-model-dir has to be set."
+
     )
     parser.add_argument(
         "--target-registry",
@@ -707,22 +833,24 @@ def main(parent_parser: Optional[argparse.ArgumentParser] = None):
     # Configure logging
     handle_logging_args(args)
 
-    # Make sure repos and guids are given
-    if not args.module_guid:
+    # Make sure if repos are given, then guids are also given
+    if args.artifactory_repo and not args.module_guid:
         parser.print_usage()
         print(
-            "error: the following arguments must have at least one entry: {}/{}".format(
+            "error: if --artifactory-repo is set, then the following argument must have at least one entry: {}/{}".format(
                 "--module-guid",
                 "-m",
             )
         )
         sys.exit(2)
-    if not args.artifactory_repo:
+    if not args.artifactory_repo and not args.local_model_dir:
         parser.print_usage()
         print(
-            "error: the following arguments must have at least one entry: {}/{}".format(
+            "error: at least one of the following arguments must have a value: {}/{} and {}/{}".format(
                 "--artifactory-repo",
                 "-r",
+                "--local-model-dir",
+                "-md"
             )
         )
         sys.exit(2)
