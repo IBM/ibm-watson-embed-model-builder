@@ -484,14 +484,15 @@ def get_models_from_local_dir(model_dir_path: str) -> List[ModelInfo]:
     local_models = []
 
     # unzip first if they give us zip files
-    if all(
-        os.path.isfile(file) and file.endswith(".zip")
-        for file in os.listdir(model_dir_path)
-    ):
-        for path_to_zip_file in os.listdir(model_dir_path):
-            dest = path_to_zip_file.split("/")[-1].replace(".zip", "")
+    for zip_file in os.listdir(model_dir_path):
+        path_to_zip_file = os.path.join(model_dir_path, zip_file)
+        if os.path.isfile(path_to_zip_file) and path_to_zip_file.endswith(".zip"):
+            dest_path = path_to_zip_file.replace(".zip", "")
+            log.debug(
+                "Extracting zip file %s into folder %s", path_to_zip_file, dest_path
+            )
             with zipfile.ZipFile(path_to_zip_file, "r") as zip_ref:
-                zip_ref.extractall(dest)
+                zip_ref.extractall(dest_path)
                 zip_ref.close()
 
     for child_dir in os.listdir(model_dir_path):

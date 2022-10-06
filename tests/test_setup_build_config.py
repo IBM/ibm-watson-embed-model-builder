@@ -13,6 +13,7 @@ import csv
 import io
 import os
 import random
+import shutil
 import socket
 import tempfile
 import threading
@@ -257,6 +258,7 @@ def cli_test_harness(
     skip_default_repo=False,
     inject_latency=None,
     local_model=False,
+    zipped_model=False,
     **envkwargs,
 ):
     """Helper to avoid nested with statements in tests"""
@@ -285,7 +287,13 @@ def cli_test_harness(
                     )
                     with open(os.path.join(current_model_dir, file_name[1:]), "w") as f:
                         f.write(file_data)
-
+                if zipped_model:
+                    shutil.make_archive(
+                        base_name=os.path.join(model_dir, model_name),
+                        format="zip",
+                        root_dir=current_model_dir,
+                    )
+                    shutil.rmtree(current_model_dir)
             if include_output_csv:
                 with tempfile.NamedTemporaryFile(suffix=".csv") as output_csv:
                     if not ("-o" in cliargs or "--output-csv" in cliargs):
@@ -415,6 +423,55 @@ def test_missing_credentials():
     ):
         with pytest.raises(httpx.HTTPStatusError):
             command.main()
+
+
+def test_bad_local_model_dir_not_a_dir():
+    """Make sure that the local model dir is passed as a path to a directory"""
+    with cli_test_harness(
+        LOCAL_DATA,
+        "-it",
+        "1.3.2",
+        "-md",
+        __file__,
+        local_model=True,
+    ):
+        with pytest.raises(SystemExit) as exit_err:
+            command.main()
+        assert exit_err.value.code == 1
+
+
+def test_bad_local_model_dir_not_a_model():
+    """Make sure that the local model dir doesn't include a config.yml file, aka it's not a path to a model"""
+    with tempfile.TemporaryDirectory() as model_dir:
+        with open(os.path.join(model_dir, "config.yml"), "w") as f:
+            f.write("foo")
+        with cli_test_harness(
+            LOCAL_DATA,
+            "-it",
+            "1.3.2",
+            "-md",
+            model_dir,
+            local_model=True,
+        ):
+            with pytest.raises(SystemExit) as exit_err:
+                command.main()
+            assert exit_err.value.code == 1
+
+
+def test_local_model_as_zip():
+    """Test that the simple case of running the command with a single model as a zip file locally
+    yields the desired result
+    """
+    with cli_test_harness(
+        LOCAL_DATA,
+        "-it",
+        "1.3.2",
+        local_model=True,
+        zipped_model=True,
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 1
 
 
 def test_missing_version_in_name():
