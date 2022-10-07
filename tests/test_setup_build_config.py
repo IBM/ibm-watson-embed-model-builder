@@ -11,7 +11,9 @@ from typing import Dict, List, Optional, TextIO
 import copy
 import csv
 import io
+import os
 import random
+import shutil
 import socket
 import tempfile
 import threading
@@ -255,30 +257,43 @@ def cli_test_harness(
     include_lib_version=True,
     skip_default_repo=False,
     inject_latency=None,
+    local_model=False,
+    zipped_model=False,
     **envkwargs,
 ):
     """Helper to avoid nested with statements in tests"""
-    artifactory_repo_args = (models, None) if skip_default_repo else (models,)
-    with artifactory_repo(
-        *artifactory_repo_args,
-        inject_latency=inject_latency,
-    ) as art_repo:
-        with env(**envkwargs):
-            cliargs = list(cliargs)
-            if not ("-r" in cliargs or "--artifactory-repo" in cliargs):
-                cliargs.append("-r")
-                cliargs.extend(art_repo)
-            if include_creds:
-                if not ("-u" in cliargs or "--artifactory-username" in cliargs):
-                    cliargs.extend(["-u", ARTIFACTORY_USERNAME])
-                if not ("-k" in cliargs or "--artifactory-apikey" in cliargs):
-                    cliargs.extend(["-k", ARTIFACTORY_API_KEY])
-            if include_lib_version and not (
-                "-v" in cliargs or "--library-version" in cliargs
-            ):
-                cliargs.append("-v")
-                cliargs.extend(SUPPORTED_LIBS)
+    cliargs = list(cliargs)
+    if include_lib_version and not ("-v" in cliargs or "--library-version" in cliargs):
+        cliargs.append("-v")
+        cliargs.extend(SUPPORTED_LIBS)
 
+    if local_model:
+        with tempfile.TemporaryDirectory() as model_dir:
+            if not ("-md" in cliargs or "--local-model-dir" in cliargs):
+                cliargs.extend(["-md", model_dir])
+
+            for model_name, model_files in models.items():
+                print("model dir is: ", model_dir)
+                current_model_dir = os.path.join(model_dir, model_name)
+                os.mkdir(current_model_dir)
+                print("current_model_dir is: ", current_model_dir)
+                for (
+                    file_name,
+                    file_data,
+                ) in model_files.items():  # file_name is "/config.yml"
+                    print(
+                        "writing file name: ",
+                        os.path.join(current_model_dir, file_name[1:]),
+                    )
+                    with open(os.path.join(current_model_dir, file_name[1:]), "w") as f:
+                        f.write(file_data)
+                if zipped_model:
+                    shutil.make_archive(
+                        base_name=os.path.join(model_dir, model_name),
+                        format="zip",
+                        root_dir=current_model_dir,
+                    )
+                    shutil.rmtree(current_model_dir)
             if include_output_csv:
                 with tempfile.NamedTemporaryFile(suffix=".csv") as output_csv:
                     if not ("-o" in cliargs or "--output-csv" in cliargs):
@@ -288,6 +303,30 @@ def cli_test_harness(
             else:
                 with cli_args(*cliargs):
                     yield None
+    else:
+        artifactory_repo_args = (models, None) if skip_default_repo else (models,)
+        with artifactory_repo(
+            *artifactory_repo_args,
+            inject_latency=inject_latency,
+        ) as art_repo:
+            with env(**envkwargs):
+                if not ("-r" in cliargs or "--artifactory-repo" in cliargs):
+                    cliargs.append("-r")
+                    cliargs.extend(art_repo)
+                if include_creds:
+                    if not ("-u" in cliargs or "--artifactory-username" in cliargs):
+                        cliargs.extend(["-u", ARTIFACTORY_USERNAME])
+                    if not ("-k" in cliargs or "--artifactory-apikey" in cliargs):
+                        cliargs.extend(["-k", ARTIFACTORY_API_KEY])
+                if include_output_csv:
+                    with tempfile.NamedTemporaryFile(suffix=".csv") as output_csv:
+                        if not ("-o" in cliargs or "--output-csv" in cliargs):
+                            cliargs.extend(["-o", output_csv.name])
+                        with cli_args(*cliargs):
+                            yield output_csv.name
+                else:
+                    with cli_args(*cliargs):
+                        yield None
 
 
 ## Reusable Test Content #######################################################
@@ -296,6 +335,15 @@ MODEL_NAME = make_model_name()
 MODULE_GUID = "asdf1234"
 REPO_DATA = {
     f"/blocks/sample/{MODEL_NAME}": make_model_content(
+        {
+            "block_class": "lego.blocks.sample.testing.Tester",
+            "block_id": MODULE_GUID,
+            "lego_version": "1.2.3",
+        }
+    )
+}
+LOCAL_DATA = {
+    f"my_local_model": make_model_content(
         {
             "block_class": "lego.blocks.sample.testing.Tester",
             "block_id": MODULE_GUID,
@@ -315,6 +363,21 @@ def test_single_model():
         REPO_DATA,
         "-m",
         MODULE_GUID,
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 1
+
+
+def test_local_model():
+    """Test that the simple case of running the command with a single model locally
+    yields the desired result
+    """
+    with cli_test_harness(
+        LOCAL_DATA,
+        "-it",
+        "1.3.2",
+        local_model=True,
     ) as output_csv:
         command.main()
         model_entries = parse_csv_file(output_csv)
@@ -360,6 +423,55 @@ def test_missing_credentials():
     ):
         with pytest.raises(httpx.HTTPStatusError):
             command.main()
+
+
+def test_bad_local_model_dir_not_a_dir():
+    """Make sure that the local model dir is passed as a path to a directory"""
+    with cli_test_harness(
+        LOCAL_DATA,
+        "-it",
+        "1.3.2",
+        "-md",
+        __file__,
+        local_model=True,
+    ):
+        with pytest.raises(SystemExit) as exit_err:
+            command.main()
+        assert exit_err.value.code == 1
+
+
+def test_bad_local_model_dir_not_a_model():
+    """Make sure that the local model dir doesn't include a config.yml file, aka it's not a path to a model"""
+    with tempfile.TemporaryDirectory() as model_dir:
+        with open(os.path.join(model_dir, "config.yml"), "w") as f:
+            f.write("foo")
+        with cli_test_harness(
+            LOCAL_DATA,
+            "-it",
+            "1.3.2",
+            "-md",
+            model_dir,
+            local_model=True,
+        ):
+            with pytest.raises(SystemExit) as exit_err:
+                command.main()
+            assert exit_err.value.code == 1
+
+
+def test_local_model_as_zip():
+    """Test that the simple case of running the command with a single model as a zip file locally
+    yields the desired result
+    """
+    with cli_test_harness(
+        LOCAL_DATA,
+        "-it",
+        "1.3.2",
+        local_model=True,
+        zipped_model=True,
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 1
 
 
 def test_missing_version_in_name():
