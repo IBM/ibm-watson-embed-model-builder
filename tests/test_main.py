@@ -2,6 +2,11 @@
 Tests for the main module entrypoint
 """
 
+# Standard
+import os
+import shutil
+import tempfile
+
 # Third Party
 import pytest
 
@@ -10,7 +15,12 @@ from watson_embed_model_packager import build_model_images
 from watson_embed_model_packager.__main__ import main
 
 # Local
-from tests.helpers import TEST_CONFIG, cli_args, subproc_mock_fixture_base
+from tests.helpers import (
+    TEST_CONFIG,
+    TEST_MODELS_DIR,
+    cli_args,
+    subproc_mock_fixture_base,
+)
 
 
 @pytest.fixture
@@ -45,7 +55,71 @@ def test_main_real_artifactory_build():
         "asdf1234",
     ):
         main()
-        assert 1 == 0
+
+@pytest.mark.xfail
+def test_setup_and_build_with_local_data_outside_working_path():
+    """This test creates a manifest with local models in a tempdir outside the working path,
+    and ensures the build phase can correctly handle those local models."""
+    with tempfile.TemporaryDirectory() as tempdir:
+        # Copy over our test models into this tmpdir
+        models_dir = os.path.join(tempdir, "models")
+        # os.mkdir(models_dir)
+        shutil.copytree(TEST_MODELS_DIR, models_dir)
+        manifest_path = os.path.join(tempdir, "manifest.csv")
+
+        # Build the manifest:
+        with cli_args(
+            "setup",
+            "--output-csv",
+            manifest_path,
+            "--library-version",
+            "watson_nlp:3.2.0",
+            "--local-model-dir",
+            models_dir,
+        ):
+            main()
+
+        # Show the manifest if the test fails
+        os.system(f"cat {manifest_path}")
+
+        # Build the image(s)
+        with cli_args(
+            "build",
+            "--config",
+            manifest_path,
+        ):
+            main()
+
+
+def test_setup_and_build_with_local_data_in_relative_path():
+    """This tests the simple case of creating a manifest with our local test models, and building
+    model images out of them"""
+    with tempfile.TemporaryDirectory() as tempdir:
+        # Put the manifest in this new temp dir, but build the models from the local test data as is
+        manifest_path = os.path.join(tempdir, "manifest.csv")
+
+        # Build the manifest:
+        with cli_args(
+            "setup",
+            "--output-csv",
+            manifest_path,
+            "--library-version",
+            "watson_nlp:3.2.0",
+            "--local-model-dir",
+            TEST_MODELS_DIR,
+        ):
+            main()
+
+        # Show the manifest if the test fails
+        os.system(f"cat {manifest_path}")
+
+        # Build the image(s)
+        with cli_args(
+            "build",
+            "--config",
+            manifest_path,
+        ):
+            main()
 
 
 def test_main_bad_command(subproc_mock):
