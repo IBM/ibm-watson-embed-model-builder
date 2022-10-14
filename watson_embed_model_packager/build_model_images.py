@@ -158,9 +158,6 @@ def build_model_image(
             dockerfile = LOCAL_DOCKERFILE
 
             with tempfile.TemporaryDirectory() as working_dir:
-                # build_args["MODEL_PATH"] = os.path.join(working_dir, "models", model_config.model_name)
-                build_args["MODEL_PATH"] = os.path.join("models", model_config.model_name)
-
                 build_args["MODEL_DEST"] = f"/model_landing_zone/{model_config.model_name}"
 
                 # Hard link all of the scripts from the resources dir
@@ -180,13 +177,21 @@ def build_model_image(
                         )
                         if not os.path.isdir(fname)
                     }
+                    # Set the model path to copy from, need a relative path to {working_dir}
+                    build_args["MODEL_PATH"] = os.path.relpath(model_config.model_source, os.getcwd())
                 else:
+                    # TODO: this is probably a zip and zips probably won't work :D
                     log.debug2("Linking single model file...")
                     model_files = {
                         os.path.realpath(model_config.model_source): os.path.basename(
                             model_config.model_source
                         ),
                     }
+                    # Set the model path to copy from
+                    build_args["MODEL_PATH"] = os.path.basename(model_config.model_source)
+
+                log.debug4(f"Model files: {model_files}")
+
                 for file_source_path, file_target_path in model_files.items():
                     target = os.path.join(working_dir, file_target_path)
                     parent_dir = os.path.dirname(file_target_path)
