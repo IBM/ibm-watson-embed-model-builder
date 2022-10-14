@@ -45,6 +45,7 @@ def test_main_real_artifactory_build():
         "asdf1234",
     ):
         main()
+        assert 1 == 0
 
 
 def test_main_bad_command(subproc_mock):
