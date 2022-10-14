@@ -32,13 +32,14 @@ RUN true && \
 # Build-time arguments that won't go into the release
 # e.g. sample_models/doc_conversion
 ARG MODEL_PATH
-COPY ${MODEL_PATH} /${MODEL_PATH}
+ARG MODEL_DEST
+COPY ${MODEL_PATH} ${MODEL_DEST}
 
-# Download the model zip file
+# Zip up the model directory
 RUN true && \
     cd / && \
-    mv $(dirname ${MODEL_PATH})/* . && \
-    cd $(basename ${MODEL_PATH}) && \
+    mv $(dirname ${MODEL_DEST})/* . && \
+    cd $(basename ${MODEL_DEST}) && \
     zip -r /model.zip * && \
     chmod 444 /model.zip && \
     true

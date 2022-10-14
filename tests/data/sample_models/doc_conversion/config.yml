@@ -25,4 +25,4 @@ settings:
       structure: mltable
   text_extraction_mode: false
 version: 0.0.1
-watson_doc_understanding_version: 0.2.2a2
+watson_doc_understanding_version: 0.2.2

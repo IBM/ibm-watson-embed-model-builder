@@ -273,10 +273,8 @@ def cli_test_harness(
                 cliargs.extend(["-md", model_dir])
 
             for model_name, model_files in models.items():
-                print("model dir is: ", model_dir)
                 current_model_dir = os.path.join(model_dir, model_name)
                 os.mkdir(current_model_dir)
-                print("current_model_dir is: ", current_model_dir)
                 for (
                     file_name,
                     file_data,
@@ -382,6 +380,8 @@ def test_local_model():
         command.main()
         model_entries = parse_csv_file(output_csv)
         assert len(model_entries) == 1
+        model_source = model_entries[0]["model_source"]
+        assert "config.yml" not in model_source
 
 
 def test_model_omitted_by_guid():

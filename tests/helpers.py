@@ -19,6 +19,7 @@ TEST_DATA_DIR = os.path.realpath(
 )
 TEST_CONFIG = os.path.join(TEST_DATA_DIR, "model_config.csv")
 TEST_MODEL = os.path.join(TEST_DATA_DIR, "sample_models", "doc_conversion")
+TEST_MODELS_DIR = os.path.join(TEST_DATA_DIR, "sample_models")
 TEST_LABELS = "com.ibm.watson.embed.library_version=1.2.3;com.ibm.watson.embed.watson_library=watson_nlp;com.ibm.watson.embed.created=2020-06-04 19:00:00.000000;com.ibm.watson.embed.module_class=watson_nlp.workflows.keywords.text_rank.Text_Rank;com.ibm.watson.embed.module_guid=asdf1234"
 
 
