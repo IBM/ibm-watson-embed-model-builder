@@ -66,10 +66,21 @@ input_path=$(echo $model_dir | sed "s,^$model_root_dir,," | sed "s,^/,,")
 # If uploading, do the upload
 if [ "$upload" == "true" ]
 then
-    url=$S3_URL
-    key=$S3_ACCESS_KEY_ID
-    secret=$S3_SECRET_ACCESS_KEY
-    bucket=$S3_BUCKET_NAME
+    storage_config_file=${S3_CONFIG_FILE:-""}
+    if [ -f $storage_config_file ]
+    then
+        # Using -r (raw) to not include the quotes around the values
+        url=$(jq -r .endpoint_url "$storage_config_file")
+        key=$(jq -r .access_key_id "$storage_config_file")
+        secret=$(jq -r .secret_access_key "$storage_config_file")
+        bucket=$(jq -r .default_bucket "$storage_config_file")
+    else
+        url=$S3_URL
+        key=$S3_ACCESS_KEY_ID
+        secret=$S3_SECRET_ACCESS_KEY
+        bucket=$S3_BUCKET_NAME
+    fi
+
     base_upload_path=$UPLOAD_PATH
 
     # If the upload path is a single file, just upload it
