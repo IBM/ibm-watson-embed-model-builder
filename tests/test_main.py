@@ -56,6 +56,7 @@ def test_main_real_artifactory_build():
     ):
         main()
 
+
 @pytest.mark.xfail
 def test_setup_and_build_with_local_data_outside_working_path():
     """This test creates a manifest with local models in a tempdir outside the working path,
