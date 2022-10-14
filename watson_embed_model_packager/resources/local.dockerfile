@@ -35,7 +35,7 @@ ARG MODEL_PATH
 ARG MODEL_DEST
 COPY ${MODEL_PATH} ${MODEL_DEST}
 
-# Download the model zip file
+# Zip up the model directory
 RUN true && \
     cd / && \
     mv $(dirname ${MODEL_DEST})/* . && \
