@@ -33,6 +33,7 @@ def test_main_build(subproc_mock):
     ):
         main()
 
+
 def test_main_real_artifactory_build():
     with cli_args(
         "build",
