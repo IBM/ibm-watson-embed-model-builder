@@ -382,6 +382,8 @@ def test_local_model():
         command.main()
         model_entries = parse_csv_file(output_csv)
         assert len(model_entries) == 1
+        model_source = model_entries[0]["model_source"]
+        assert "config.yml" not in model_source
 
 
 def test_model_omitted_by_guid():

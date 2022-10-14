@@ -347,10 +347,6 @@ def test_single_file_model(subproc_mock):
         with cli_args("--config", config_file):
             command.main()
 
-    print(os.path.join(TEST_MODEL, "config.yml"))
-    assert 1 == 0
-
-
 
 def test_docker_build_with_platform():
     """Make sure that if --platform is found in the docker build help, we build
