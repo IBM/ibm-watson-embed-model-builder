@@ -18,13 +18,14 @@ ENV BIN_OUT_PATH=/bin_out
 ENV LIB_OUT_PATH=/lib_out
 RUN true && \
     microdnf update -y && \
-    microdnf install -y which unzip findutils openssl util-linux && \
+    microdnf install -y which unzip findutils openssl util-linux jq && \
     /copy_bin_with_libs.sh openssl && \
     /copy_bin_with_libs.sh curl && \
     /copy_bin_with_libs.sh sed && \
     /copy_bin_with_libs.sh unzip && \
     /copy_bin_with_libs.sh find && \
     /copy_bin_with_libs.sh rev && \
+    /copy_bin_with_libs.sh jq && \
     true
 
 # Build-time arguments that won't go into the release
