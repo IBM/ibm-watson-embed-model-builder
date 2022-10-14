@@ -467,7 +467,7 @@ def get_model_info_from_local_config_yml(
         config_text = f.read()
         config = yaml.safe_load(config_text)
 
-    model_url = config_path.replace("/config.yaml", "")
+    model_url = config_path.replace("/config.yml", "").replace("/config.yaml", "")
 
     model_info = update_model_info_from_config(
         config=config, model_name=model_name, model_url=model_url, local_model=True
