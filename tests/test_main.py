@@ -34,6 +34,7 @@ def test_main_build(subproc_mock):
         main()
 
 
+
 def test_main_bad_command(subproc_mock):
     """Make sure that a ValueError is raised if a bad command is given"""
     with cli_args("foobar"):
