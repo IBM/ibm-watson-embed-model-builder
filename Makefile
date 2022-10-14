@@ -1,5 +1,5 @@
 test: ## run pytest in parallel with coverage reporting. Fail under 100% code coverage
-	python3 -m pytest -W error \
+	pytest -W error \
 		--cov-report term \
 		--cov-report html:htmlcov \
 		--cov=watson_embed_model_packager \
@@ -22,7 +22,7 @@ clean: ## clean up build artifacts and test reports
 	rm -fr build dist htmlcov reports *.egg-info .coverage
 
 fmt:
-	python3 -m black . && python3 -m isort .
+	black . && isort .
 
 fmt-check:
 	black --check . && isort --check .
