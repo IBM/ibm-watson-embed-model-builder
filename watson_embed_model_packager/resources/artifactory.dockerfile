@@ -37,6 +37,7 @@ ARG ARTIFACTORY_API_KEY
 RUN true && \
     cd / && \
     curl -o model.zip \
+        --fail \
         -u ${ARTIFACTORY_USERNAME}:${ARTIFACTORY_API_KEY} \
         ${MODEL_URL} && \
     chmod 444 model.zip && \

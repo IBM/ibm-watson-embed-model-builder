@@ -1,0 +1,2 @@
+model_name,target_image_name,model_source,image_labels
+nlp_keywords_text-rank_en,us.icr.io/cp/watson-ai/nlp-keywords-text-rank-en:latest,https://na.artifactory.swg-devops.com/artifactory/wcp-nlu-team-one-nlp-models-generic-local/workflows/keywords/keywords_text-rank-workflow_v1-2-0_lang_en_stock_2020-06-04-190000.zip,com.ibm.watson.embed.library_version=1.2.0;com.ibm.watson.embed.created=2020-06-04 19:00:00.000000;com.ibm.watson.embed.module_class=watson_nlp.workflows.keywords.text_rank.Text_Rank
