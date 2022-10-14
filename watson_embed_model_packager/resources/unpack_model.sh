@@ -6,6 +6,13 @@
 input_path=${1:-"/app/model.zip"}
 model_root_dir=${MODEL_ROOT_DIR:-"/app/models"}
 upload=${UPLOAD:-"false"}
+insecure_mode=${USE_INSECURE_UPLOADS:-"false"}
+
+insecure_arg=""
+if [ $insecure_mode = "true" ]
+then
+  insecure_arg="-k"
+fi
 
 # From here out, fail on unresolved variables and broken pipes!
 set -euo pipefail
@@ -34,6 +41,7 @@ function upload {
     # Curl call
     echo "Uploading [$upload_file -> $resource]"
     curl -X PUT -T "$upload_file" \
+        "${insecure_arg}" \
         -H "Host: $(echo $url | rev | cut -d'/' -f 1 | rev)" \
         -H "Date: $date_value" \
         -H "Content-Type: $content_type" \
