@@ -156,8 +156,13 @@ def build_model_image(
         if os.path.exists(model_config.model_source):
             log.debug("Using local model for [%s]", model_config.model_name)
             dockerfile = LOCAL_DOCKERFILE
-            build_args["MODEL_PATH"] = model_config.model_source
+
             with tempfile.TemporaryDirectory() as working_dir:
+                # build_args["MODEL_PATH"] = os.path.join(working_dir, "models", model_config.model_name)
+                build_args["MODEL_PATH"] = os.path.join("models", model_config.model_name)
+
+                build_args["MODEL_DEST"] = f"/model_landing_zone/{model_config.model_name}"
+
                 # Hard link all of the scripts from the resources dir
                 for fname in glob.glob(f"{RESOURCES_DIR}/*.sh"):
                     link_or_copy(
@@ -165,7 +170,9 @@ def build_model_image(
                     )
 
                 # Hard link all files in the model directory
+                log.debug2(f"Looking at model dir: {model_config.model_source}")
                 if os.path.isdir(model_config.model_source):
+                    log.debug2("Linking all files in model directory...")
                     model_files = {
                         os.path.realpath(fname): os.path.relpath(fname, os.getcwd())
                         for fname in glob.glob(
@@ -174,6 +181,7 @@ def build_model_image(
                         if not os.path.isdir(fname)
                     }
                 else:
+                    log.debug2("Linking single model file...")
                     model_files = {
                         os.path.realpath(model_config.model_source): os.path.basename(
                             model_config.model_source
