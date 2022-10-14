@@ -17,6 +17,7 @@ from watson_embed_model_packager.__main__ import main
 # Local
 from tests.helpers import (
     TEST_CONFIG,
+    TEST_CONFIG_ARTIFACTORY_ONLY,
     TEST_MODELS_DIR,
     cli_args,
     subproc_mock_fixture_base,
@@ -42,6 +43,21 @@ def test_main_build(subproc_mock):
         "asdf1234",
     ):
         main()
+
+
+def test_main_real_artifactory_build_with_bad_creds():
+    with cli_args(
+        "build",
+        "--config",
+        TEST_CONFIG_ARTIFACTORY_ONLY,
+        "--artifactory-username",
+        "foobar@us.ibm.com",
+        "--artifactory-api-key",
+        "asdf1234",
+        "--strict",
+    ):
+        with pytest.raises(RuntimeError):
+            main()
 
 
 def test_main_real_artifactory_build():
