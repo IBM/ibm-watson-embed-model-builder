@@ -56,6 +56,9 @@ ENV MODEL_NAME=$MODEL_NAME
 COPY --from=build /bin_out/* /usr/bin/
 COPY --from=build /lib_out/* /lib64/
 
+# Copy over CA certificate bundle for `curl` to work
+COPY --from=build /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt
+
 # Copy over the model and the unpacking script
 WORKDIR /app
 RUN chmod -R ugo+rw /app/
