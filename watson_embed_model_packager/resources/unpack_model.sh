@@ -41,7 +41,7 @@ function upload {
     # Curl call
     echo "Uploading [$upload_file -> $resource]"
     curl -X PUT -T "$upload_file" \
-        "${insecure_arg}" \
+        ${insecure_arg} \
         -H "Host: $(echo $url | rev | cut -d'/' -f 1 | rev)" \
         -H "Date: $date_value" \
         -H "Content-Type: $content_type" \
