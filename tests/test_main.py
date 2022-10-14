@@ -54,7 +54,7 @@ def test_main_real_artifactory_build_with_bad_creds():
         "foobar@us.ibm.com",
         "--artifactory-api-key",
         "asdf1234",
-        "--strict"
+        "--strict",
     ):
         with pytest.raises(RuntimeError):
             main()
