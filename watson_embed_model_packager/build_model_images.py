@@ -199,12 +199,18 @@ def build_model_image(
                 log.debug4(f"Model files: {model_files}")
 
                 for file_source_path, file_target_path in model_files.items():
-                    target = os.path.join(working_dir, file_target_path)
+                    target = os.path.join(working_dir, file_target_path).replace(
+                        "../", ""
+                    )
                     parent_dir = os.path.dirname(file_target_path)
                     if parent_dir:
-                        log.debug2("Making parent dir %s", parent_dir)
+                        log.debug2(
+                            "Making joined parent dir %s",
+                            os.path.join(working_dir, parent_dir).replace("../", ""),
+                        )
                         os.makedirs(
-                            os.path.join(working_dir, parent_dir), exist_ok=True
+                            os.path.join(working_dir, parent_dir).replace("../", ""),
+                            exist_ok=True,
                         )
                     log.debug2("Linking %s -> %s", file_source_path, target)
                     link_or_copy(file_source_path, target)

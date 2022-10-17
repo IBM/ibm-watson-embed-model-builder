@@ -61,9 +61,7 @@ Run the manifest setup with the `--local-model-dir` flag to create a manifest wi
 
 ```shell
 python3 -m watson_embed_model_packager setup \
-    --module-guid 2cc95ffd-00fe-4d7d-9554-61d8777f3354 01b95845-c178-4d06-8598-0d49e23bd1a3 \
     --library-version watson_nlp:3.2.0 \
-    --target-registry my-docker-registry.com \
     --local-model-dir /path/to/models \
     --output-csv model-manifest.csv
 ```
