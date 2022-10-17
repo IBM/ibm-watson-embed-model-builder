@@ -173,16 +173,20 @@ def build_model_image(
                 if os.path.isdir(model_config.model_source):
                     log.debug2("Linking all files in model directory...")
                     model_files = {
-                        os.path.realpath(fname): os.path.relpath(fname, os.getcwd())
+                        os.path.realpath(fname): os.path.join(
+                            os.path.basename(model_config.model_source),
+                            os.path.relpath(fname, model_config.model_source),
+                        )
                         for fname in glob.glob(
                             f"{model_config.model_source}/**", recursive=True
                         )
                         if not os.path.isdir(fname)
                     }
                     # Set the model path to copy from, need a relative path to {working_dir}
-                    build_args["MODEL_PATH"] = os.path.relpath(
-                        model_config.model_source, os.getcwd()
+                    build_args["MODEL_PATH"] = os.path.basename(
+                        model_config.model_source
                     )
+
                 else:
                     # TODO: this is probably a zip and zips probably won't work :D
                     log.debug2("Linking single model file...")
@@ -199,17 +203,15 @@ def build_model_image(
                 log.debug4(f"Model files: {model_files}")
 
                 for file_source_path, file_target_path in model_files.items():
-                    target = os.path.join(working_dir, file_target_path).replace(
-                        "../", ""
-                    )
+                    target = os.path.join(working_dir, file_target_path)
                     parent_dir = os.path.dirname(file_target_path)
                     if parent_dir:
                         log.debug2(
                             "Making joined parent dir %s",
-                            os.path.join(working_dir, parent_dir).replace("../", ""),
+                            os.path.join(working_dir, parent_dir),
                         )
                         os.makedirs(
-                            os.path.join(working_dir, parent_dir).replace("../", ""),
+                            os.path.join(working_dir, parent_dir),
                             exist_ok=True,
                         )
                     log.debug2("Linking %s -> %s", file_source_path, target)
