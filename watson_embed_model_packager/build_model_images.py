@@ -168,6 +168,9 @@ def build_model_image(
                         fname, os.path.join(working_dir, os.path.basename(fname))
                     )
 
+                # Set the model path to copy from, need a relative path to {working_dir}
+                build_args["MODEL_PATH"] = os.path.basename(model_config.model_source)
+
                 # Hard link all files in the model directory
                 log.debug2(f"Looking at model dir: {model_config.model_source}")
                 if os.path.isdir(model_config.model_source):
@@ -182,10 +185,6 @@ def build_model_image(
                         )
                         if not os.path.isdir(fname)
                     }
-                    # Set the model path to copy from, need a relative path to {working_dir}
-                    build_args["MODEL_PATH"] = os.path.basename(
-                        model_config.model_source
-                    )
 
                 else:
                     # TODO: this is probably a zip and zips probably won't work :D
@@ -195,10 +194,6 @@ def build_model_image(
                             model_config.model_source
                         ),
                     }
-                    # Set the model path to copy from
-                    build_args["MODEL_PATH"] = os.path.basename(
-                        model_config.model_source
-                    )
 
                 log.debug4(f"Model files: {model_files}")
 
