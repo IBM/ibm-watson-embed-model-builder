@@ -407,22 +407,29 @@ def update_model_info_from_config(
     # Determine the parent library version
     parent_lib_version_key = f"{raw_parent_library}_version"
     parent_lib_version = config.get(parent_lib_version_key)
-    if (
-        parent_lib_version is None and not local_model
-    ):  # we check version in model_path if this is the case of artifactory repo models
-        log.debug("No %s found in config [%s]", parent_lib_version_key, config)
+    if parent_lib_version is None:
+        if (
+            not local_model
+        ):  # we check version in model_path if this is the case of artifactory repo models
+            log.debug("No %s found in config [%s]", parent_lib_version_key, config)
 
-        # Look in the model name if not found in the config.yml
-        version_match = VERSION_EXPR.search(model_path)
-        assert (
-            version_match
-        ), f"Programming Error: model names with missing versions should be eliminated earlier. Model: {model_path}"
-        parent_lib_version = "{}.{}.{}".format(
-            version_match.group("major"),
-            version_match.group("minor"),
-            version_match.group("patch"),
-        )
-        log.debug("Using library version [%s] found in model name", parent_lib_version)
+            # Look in the model name if not found in the config.yml
+            version_match = VERSION_EXPR.search(model_path)
+            assert (
+                version_match
+            ), f"Programming Error: model names with missing versions should be eliminated earlier. Model: {model_path}"
+            parent_lib_version = "{}.{}.{}".format(
+                version_match.group("major"),
+                version_match.group("minor"),
+                version_match.group("patch"),
+            )
+            log.debug(
+                "Using library version [%s] found in model name", parent_lib_version
+            )
+        else:  # we check for "version"
+            parent_lib_version_key = "version"
+            parent_lib_version = config.get(parent_lib_version_key)
+
     try:
         parent_lib_version = semver.VersionInfo.parse(parent_lib_version)
     except ValueError:
@@ -487,21 +494,29 @@ def get_models_from_local_dir(model_dir_path: str) -> List[ModelInfo]:
     for zip_file in os.listdir(model_dir_path):
         path_to_zip_file = os.path.join(model_dir_path, zip_file)
         if os.path.isfile(path_to_zip_file) and path_to_zip_file.endswith(".zip"):
-            dest_path = path_to_zip_file.replace(".zip", "")
             log.debug(
-                "Extracting zip file %s into folder %s", path_to_zip_file, dest_path
+                "Extracting zip file %s into location %s",
+                path_to_zip_file,
+                model_dir_path,
             )
             with zipfile.ZipFile(path_to_zip_file, "r") as zip_ref:
-                zip_ref.extractall(dest_path)
+                zip_ref.extractall(model_dir_path)
                 zip_ref.close()
+            log.debug(
+                "%s now has child dir %s", model_dir_path, os.listdir(model_dir_path)
+            )
 
     for child_dir in os.listdir(model_dir_path):
-        full_model_dir = os.path.join(model_dir_path, child_dir)
-        if os.path.isdir(full_model_dir) and "config.yml" in os.listdir(full_model_dir):
-            model = get_model_info_from_local_config_yml(
-                child_dir, os.path.join(full_model_dir, "config.yml")
-            )
-            local_models.append(model)
+        if not child_dir.startswith("__MACOSX"):
+            full_model_dir = os.path.join(model_dir_path, child_dir)
+            if os.path.isdir(full_model_dir) and "config.yml" in os.listdir(
+                full_model_dir
+            ):
+                log.debug("Looking in child_dir %s", full_model_dir)
+                model = get_model_info_from_local_config_yml(
+                    child_dir, os.path.join(full_model_dir, "config.yml")
+                )
+                local_models.append(model)
 
     log.debug3("Models for local dir [%s]: %s", model_dir_path, local_models)
 

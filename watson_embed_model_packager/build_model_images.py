@@ -186,40 +186,31 @@ def build_model_image(
                         if not os.path.isdir(fname)
                     }
 
-                else:
-                    # TODO: this is probably a zip and zips probably won't work :D
-                    log.debug2("Linking single model file...")
-                    model_files = {
-                        os.path.realpath(model_config.model_source): os.path.basename(
-                            model_config.model_source
-                        ),
-                    }
+                    log.debug4(f"Model files: {model_files}")
 
-                log.debug4(f"Model files: {model_files}")
+                    for file_source_path, file_target_path in model_files.items():
+                        target = os.path.join(working_dir, file_target_path)
+                        parent_dir = os.path.dirname(file_target_path)
+                        if parent_dir:
+                            log.debug2(
+                                "Making joined parent dir %s",
+                                os.path.join(working_dir, parent_dir),
+                            )
+                            os.makedirs(
+                                os.path.join(working_dir, parent_dir),
+                                exist_ok=True,
+                            )
+                        log.debug2("Linking %s -> %s", file_source_path, target)
+                        link_or_copy(file_source_path, target)
 
-                for file_source_path, file_target_path in model_files.items():
-                    target = os.path.join(working_dir, file_target_path)
-                    parent_dir = os.path.dirname(file_target_path)
-                    if parent_dir:
-                        log.debug2(
-                            "Making joined parent dir %s",
-                            os.path.join(working_dir, parent_dir),
-                        )
-                        os.makedirs(
-                            os.path.join(working_dir, parent_dir),
-                            exist_ok=True,
-                        )
-                    log.debug2("Linking %s -> %s", file_source_path, target)
-                    link_or_copy(file_source_path, target)
-
-                # Do the docker build
-                do_docker_build(
-                    dockerfile=dockerfile,
-                    working_dir=working_dir,
-                    image_tag=model_config.target_image_name,
-                    build_args=build_args,
-                    build_labels=build_labels,
-                )
+                    # Do the docker build
+                    do_docker_build(
+                        dockerfile=dockerfile,
+                        working_dir=working_dir,
+                        image_tag=model_config.target_image_name,
+                        build_args=build_args,
+                        build_labels=build_labels,
+                    )
 
         # Otherwise, use the artifactory build and validate the credentials
         else:

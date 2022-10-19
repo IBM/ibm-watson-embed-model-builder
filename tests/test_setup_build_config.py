@@ -286,10 +286,14 @@ def cli_test_harness(
                     with open(os.path.join(current_model_dir, file_name[1:]), "w") as f:
                         f.write(file_data)
                 if zipped_model:
+                    print(
+                        "making archive file name .zip: ",
+                        os.path.join(model_dir, model_name),
+                    )
                     shutil.make_archive(
                         base_name=os.path.join(model_dir, model_name),
                         format="zip",
-                        root_dir=current_model_dir,
+                        root_dir=model_dir,
                     )
                     shutil.rmtree(current_model_dir)
             if include_output_csv:
@@ -464,6 +468,28 @@ def test_local_model_as_zip():
     """
     with cli_test_harness(
         LOCAL_DATA,
+        "-it",
+        "1.3.2",
+        local_model=True,
+        zipped_model=True,
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 1
+
+
+def test_local_model_with_version_in_config():
+    """Make sure that local model has version in its config is counted"""
+    with cli_test_harness(
+        {
+            f"my_local_model": make_model_content(
+                {
+                    "block_class": "lego.blocks.sample.testing.Tester",
+                    "block_id": MODULE_GUID,
+                    "version": "1.2.4",
+                }
+            )
+        },
         "-it",
         "1.3.2",
         local_model=True,
