@@ -478,6 +478,40 @@ def test_local_model_as_zip():
         assert len(model_entries) == 1
 
 
+def test_local_model_with_multiple_zip_files():
+    """Test that the case of running the command with a multiple models as a zip files locally
+    yields the desired result
+    """
+    with cli_test_harness(
+        {
+            f"my_local_model": make_model_content(
+                {
+                    "block_class": "lego.blocks.sample.testing.Tester",
+                    "block_id": MODULE_GUID,
+                    "version": "1.2.4",
+                }
+            ),
+            f"my_local_model_2": make_model_content(
+                {
+                    "block_class": "lego.blocks.sample.testing.Tester",
+                    "block_id": MODULE_GUID + "2",
+                    "version": "9.9.9",
+                }
+            ),
+        },
+        "-it",
+        "1.3.2",
+        local_model=True,
+        zipped_model=True,
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 2
+        # no idea which model is at index 0, so we're just testing the values are different
+        assert model_entries[0]["image_labels"] != model_entries[1]["image_labels"]
+        assert model_entries[0]["model_source"] != model_entries[1]["model_source"]
+
+
 def test_local_model_with_version_in_config():
     """Make sure that local model has version in its config is counted"""
     with cli_test_harness(
