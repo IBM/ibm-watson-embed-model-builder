@@ -39,6 +39,7 @@ python3 -m watson_embed_model_packager setup \
     --library-version watson_nlp:3.2.0 \
     --artifactory-repo https://my.artifactory.com/artifactory/my-watson-nlp-models/ \
     --target-registry my-docker-registry.com \
+    --image-tag 1.2.3 \
     --output-csv model-manifest.csv
 ```
 
@@ -63,6 +64,7 @@ Run the manifest setup with the `--local-model-dir` flag to create a manifest wi
 python3 -m watson_embed_model_packager setup \
     --library-version watson_nlp:3.2.0 \
     --local-model-dir /path/to/models \
+    --image-tag 1.2.3 \
     --output-csv model-manifest.csv
 ```
 

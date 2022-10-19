@@ -614,21 +614,10 @@ def test_image_tag_is_included_in_csv_if_passed_in():
         assert "0.0.5" in model_entries[0][constants.TARGET_IMAGE_NAME]
 
 
-def test_image_tag_is_included_in_csv_coming_from_library_version():
+def test_images_are_tagged_latest_if_image_tag_flag_unset():
     """Make sure that model image tag is included in csv file, when there's no --image-tag flag set"""
-    model_name = make_model_name(
-        module_type="ensemble", model_label="classification-workflow"
-    )
     with cli_test_harness(
-        {
-            f"/blocks/sample/{model_name}": make_model_content(
-                {
-                    "block_class": "lego.blocks.sample.testing.Tester",
-                    "block_id": MODULE_GUID,
-                    "lego_version": "1.2.3",
-                }
-            )
-        },
+        REPO_DATA,
         "-m",
         MODULE_GUID,
     ) as output_csv:
@@ -636,7 +625,7 @@ def test_image_tag_is_included_in_csv_coming_from_library_version():
         model_entries = parse_csv_file(output_csv)
         assert len(model_entries) == 1
         print(model_entries[0])
-        assert "1.2.3" in model_entries[0][constants.TARGET_IMAGE_NAME]
+        assert "latest" in model_entries[0][constants.TARGET_IMAGE_NAME]
 
 
 def test_image_tag_is_included_in_csv_coming_from_flag_not_library_version():
