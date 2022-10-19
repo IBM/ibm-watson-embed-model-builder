@@ -514,7 +514,7 @@ def get_target_image_name(
     """Get the image name that should be used to tag the built image"""
     lib_prefix = model_info.parent_library.replace("_", "-")
     image_name = f"{lib_prefix}_{model_info.name}"
-    image_version = image_tag if image_tag else str(model_info.parent_library_version)
+    image_version = image_tag if image_tag else "latest"
     full_name = f"{image_name}:{image_version}"
     if target_registry:
         full_name = "{}/{}".format(target_registry.rstrip("/"), full_name)
