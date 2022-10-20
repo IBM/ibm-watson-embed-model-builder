@@ -507,16 +507,14 @@ def get_models_from_local_dir(model_dir_path: str) -> List[ModelInfo]:
             )
 
     for child_dir in os.listdir(model_dir_path):
-        if not child_dir.startswith("__MACOSX"):
-            full_model_dir = os.path.join(model_dir_path, child_dir)
-            if os.path.isdir(full_model_dir) and "config.yml" in os.listdir(
-                full_model_dir
-            ):
-                log.debug("Looking in child_dir %s", full_model_dir)
-                model = get_model_info_from_local_config_yml(
-                    child_dir, os.path.join(full_model_dir, "config.yml")
-                )
-                local_models.append(model)
+        # if not child_dir.startswith("__MACOSX"):
+        full_model_dir = os.path.join(model_dir_path, child_dir)
+        if os.path.isdir(full_model_dir) and "config.yml" in os.listdir(full_model_dir):
+            log.debug("Looking in child_dir %s", full_model_dir)
+            model = get_model_info_from_local_config_yml(
+                child_dir, os.path.join(full_model_dir, "config.yml")
+            )
+            local_models.append(model)
 
     log.debug3("Models for local dir [%s]: %s", model_dir_path, local_models)
 
