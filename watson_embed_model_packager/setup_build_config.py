@@ -387,7 +387,7 @@ def update_model_info_from_config(
     config, model_name: str, model_path="", model_url="", local_model=False
 ) -> Optional[ModelInfo]:
     # Get the guid for this model's module
-    id_fields = [key for key in config.keys() if key.endswith("_id")]
+    id_fields = [key for key in config.keys() if key.endswith("_id") and key != "tracking_id"]
     if len(id_fields) != 1:
         log.warning("No single module guid found for model with config [%s]", config)
         return None
