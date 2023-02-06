@@ -496,13 +496,12 @@ def get_models_from_local_dir(model_dir_path: str) -> List[ModelInfo]:
     for zip_file in os.listdir(model_dir_path):
         path_to_zip_file = os.path.join(model_dir_path, zip_file)
         if os.path.isfile(path_to_zip_file) and path_to_zip_file.endswith(".zip"):
+            new_dir_loc = path_to_zip_file.replace(".zip", "")
             log.debug(
-                "Extracting zip file %s into location %s",
-                path_to_zip_file,
-                model_dir_path,
+                "Extracting zip file %s into location %s", path_to_zip_file, new_dir_loc
             )
             with zipfile.ZipFile(path_to_zip_file, "r") as zip_ref:
-                zip_ref.extractall(model_dir_path)
+                zip_ref.extractall(new_dir_loc)
                 zip_ref.close()
             log.debug(
                 "%s now has child dir %s", model_dir_path, os.listdir(model_dir_path)
@@ -511,8 +510,9 @@ def get_models_from_local_dir(model_dir_path: str) -> List[ModelInfo]:
     for child_dir in os.listdir(model_dir_path):
         # if not child_dir.startswith("__MACOSX"):
         full_model_dir = os.path.join(model_dir_path, child_dir)
+        log.debug("Inspecting path: %s", full_model_dir)
         if os.path.isdir(full_model_dir) and "config.yml" in os.listdir(full_model_dir):
-            log.debug("Looking in child_dir %s", full_model_dir)
+            log.debug("Found a model here: %s", full_model_dir)
             model = get_model_info_from_local_config_yml(
                 child_dir, os.path.join(full_model_dir, "config.yml")
             )
