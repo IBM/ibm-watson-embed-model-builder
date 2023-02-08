@@ -57,7 +57,7 @@ mkdir -p "$model_dir"
 cd $model_dir
 
 # Unzip the target file
-unzip $input_path
+unzip -o $input_path
 
 # Update the input path to trigger the upload
 cd ..
