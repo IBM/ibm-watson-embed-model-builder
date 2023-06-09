@@ -143,7 +143,7 @@ def group_by_module_type(model_paths: List[str]) -> Dict[str, List[str]]:
             continue
 
         # Parse the model names to remove the date stamps and version info
-        name_parts = name.split(".")[0].split("_")
+        name_parts = name.rpartition(".zip")[0].split("_")
         version_matches = [bool(VERSION_EXPR.match(part)) for part in name_parts]
         date_matches = [bool(DATE_EXPR.match(part)) for part in name_parts]
 
@@ -275,7 +275,7 @@ async def get_latest_valid_model(
     model_artifacts = sorted(
         model_artifacts,
         key=lambda model_name: datetime.strptime(
-            model_name.split(".")[0].rpartition("_")[-1],
+            model_name.rpartition(".zip")[0].rpartition("_")[-1],
             TIME_PARSE_FORMAT,
         ),
         reverse=True,
