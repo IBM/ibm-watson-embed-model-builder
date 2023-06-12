@@ -18,7 +18,7 @@ ENV BIN_OUT_PATH=/bin_out
 ENV LIB_OUT_PATH=/lib_out
 RUN true && \
     microdnf update -y && \
-    microdnf install -y which unzip findutils openssl util-linux jq && \
+    microdnf install -y which unzip findutils openssl util-linux jq zip && \
     /copy_bin_with_libs.sh openssl && \
     /copy_bin_with_libs.sh curl && \
     /copy_bin_with_libs.sh sed && \
@@ -47,6 +47,12 @@ RUN true && \
 # Copy the build script and ensure that it's permissions are set correctly
 COPY unpack_model.sh /unpack_model.sh
 RUN chmod 555 /unpack_model.sh
+
+RUN true && \
+    unzip model.zip -d unzipped_model && \
+    chmod -R ugo+r unzipped_model && \
+    cd unzipped_model && \
+    zip -r ../model.zip .
 
 ## release #####################################################################
 FROM registry.access.redhat.com/ubi9/ubi-micro:latest as release
