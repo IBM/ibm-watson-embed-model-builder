@@ -1,4 +1,4 @@
 alchemy-logging>=1.1.0,<2.0
 semver>=2.13.0,<3.0
 httpx>=0.23.0,<1.0
-PyYAML>=5.4.1,<6.0
+PyYAML>=6.0.0,<7.0
