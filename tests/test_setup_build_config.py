@@ -990,6 +990,48 @@ def test_missing_module_class_in_config():
         assert len(model_entries) == 0
 
 
+def test_model_with_module_id_and_block_id_in_config_that_match():
+    """Make sure that model has module_id and block_id that match gets counted"""
+    with cli_test_harness(
+        {
+            f"/blocks/sample/{MODEL_NAME}": make_model_content(
+                {
+                    "block_class": "watson_nlp.blocks.sample.testing.Tester",
+                    "block_id": MODULE_GUID,
+                    "module_id": MODULE_GUID,
+                    "watson_nlp_version": "1.2.3",
+                }
+            )
+        },
+        "-m",
+        MODULE_GUID,
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 1
+
+
+def test_model_with_module_id_and_block_id_in_config_that_dont_match():
+    """Make sure that a model has module_id and block_id that don't match doesn't count"""
+    with cli_test_harness(
+        {
+            f"/blocks/sample/{MODEL_NAME}": make_model_content(
+                {
+                    "block_class": "watson_nlp.blocks.sample.testing.Tester",
+                    "block_id": MODULE_GUID,
+                    "module_id": "some other id",
+                    "watson_nlp_version": "1.2.3",
+                }
+            )
+        },
+        "-m",
+        MODULE_GUID,
+    ) as output_csv:
+        command.main()
+        model_entries = parse_csv_file(output_csv)
+        assert len(model_entries) == 0
+
+
 def test_version_not_a_semver():
     """Make sure that a bad version causes a model to be discarded"""
     with cli_test_harness(

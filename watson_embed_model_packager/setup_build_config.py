@@ -391,8 +391,21 @@ def update_model_info_from_config(
         key for key in config.keys() if key.endswith("_id") and key != "tracking_id"
     ]
     if len(id_fields) != 1:
-        log.warning("No single module guid found for model with config [%s]", config)
-        return None
+        # if one of them is module_id, make sure it matches the other _id field
+        if len(id_fields) == 2 and "module_id" in id_fields:
+            if config[id_fields[0]] != config[id_fields[1]]:
+                log.warning(
+                    "Found multiple id fields with different values: [%s] and [%s]",
+                    config[id_fields[0]],
+                    config[id_fields[1]],
+                )
+                return None
+        else:
+            log.warning(
+                "Either no id or too many id fields found for model with config [%s]",
+                config,
+            )
+            return None
     id_field = id_fields[0]
     module_guid = config[id_field]
 
