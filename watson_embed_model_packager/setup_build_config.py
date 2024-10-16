@@ -464,7 +464,7 @@ def update_model_info_from_config(
         else:  # using artifactory model, so parse the date from model name
             # Need to look in the model name
             created_datetime = datetime.strptime(
-                model_path.split(".")[0].rpartition("_")[-1],
+                model_path.split(".")[-2].rpartition("_")[-1],
                 TIME_PARSE_FORMAT,
             )
             created = created_datetime.isoformat().replace("T", " ")
