@@ -112,7 +112,9 @@ def do_docker_build(
             log.info("Building without --platform")
             DOCKER_BUILD_COMMAND = "docker build"
 
-    build_cmd = f"{DOCKER_BUILD_COMMAND} . -f {dockerfile} -t {image_tag}"
+    build_cmd = (
+        f"{DOCKER_BUILD_COMMAND} . -f {dockerfile} -t {image_tag} --progress plain"
+    )
     for arg_name, arg_val in build_args.items():
         build_cmd += f" --build-arg {arg_name}={arg_val}"
     for label_name, label_val in build_labels.items():
